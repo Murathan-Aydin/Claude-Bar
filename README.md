@@ -1,8 +1,10 @@
-# ClaudeBar
+# Claude Bar
 
 A macOS menu bar app that shows your Claude.ai usage — current session and weekly limit.
 
 ![macOS](https://img.shields.io/badge/macOS-13%2B-black) ![Swift](https://img.shields.io/badge/Swift-5.9-orange)
+
+![screenshot](assets/screenshot.png)
 
 ---
 
@@ -28,7 +30,7 @@ Color changes from green → orange → red as you approach limits.
 
 **1. Clone and open in Xcode**
 ```bash
-git clone https://github.com/yourname/claudeBar.git
+git clone git@github.com:Murathan-Aydin/Claude-Bar.git
 ```
 Open `claudeBar.xcodeproj`.
 
