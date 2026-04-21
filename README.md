@@ -26,7 +26,13 @@ Color changes from green → orange → red as you approach limits.
 
 ---
 
-## Setup
+## Download
+
+**[Download ClaudeBar.dmg](https://ma-dev.fr/ClaudeBar.dmg)** — drag & drop into Applications, no Xcode needed.
+
+---
+
+## Setup (build from source)
 
 **1. Clone and open in Xcode**
 ```bash
@@ -101,7 +107,13 @@ La couleur passe de vert → orange → rouge selon l'utilisation.
 
 ---
 
-## Installation
+## Téléchargement
+
+**[Télécharger ClaudeBar.dmg](https://ma-dev.fr/ClaudeBar.dmg)** — glisse-dépose dans Applications, pas besoin de Xcode.
+
+---
+
+## Installation (compiler depuis les sources)
 
 **1. Cloner et ouvrir dans Xcode**
 ```bash
