@@ -72,3 +72,78 @@ To launch at login: System Settings → General → Login Items → add `claudeB
 **Percentages stuck at 0%** — Claude's internal API may have changed. Check Network tab in Safari Web Inspector on claude.ai and update the keys in `AppDelegate.swift`.
 
 **Popover doesn't open** — Make sure App Sandbox is disabled.
+
+---
+
+---
+
+# Claude Bar — Français
+
+Une app macOS qui affiche ton taux d'utilisation Claude.ai dans la barre de menu.
+
+---
+
+## Ce que ça fait
+
+Affiche en temps réel :
+- **Session actuelle** (les 5 dernières heures)
+- **Cette semaine**
+
+La couleur passe de vert → orange → rouge selon l'utilisation.
+
+---
+
+## Prérequis
+
+- macOS 13+
+- Xcode 15+
+- Un compte Claude.ai connecté via **Safari**
+
+---
+
+## Installation
+
+**1. Cloner et ouvrir dans Xcode**
+```bash
+git clone git@github.com:Murathan-Aydin/Claude-Bar.git
+```
+Ouvre `claudeBar.xcodeproj`.
+
+**2. Désactiver le Sandbox** (obligatoire pour l'accès réseau)
+
+Xcode → target `claudeBar` → Signing & Capabilities → cliquer **–** sur App Sandbox
+
+**3. Lancer**
+```
+⌘R
+```
+L'icône apparaît dans ta barre de menu.
+
+---
+
+## Utilisation
+
+L'app lit ton cookie de session automatiquement via le WebKit partagé avec Safari.
+
+**Utilisateurs Safari** — connecte-toi à claude.ai dans Safari, c'est tout.
+
+**Utilisateurs Chrome** — clique sur l'icône ⚙️ dans le popover et colle manuellement le cookie `sessionKey` :
+> Chrome → DevTools (F12) → Application → Cookies → claude.ai → `sessionKey`
+
+---
+
+## Installer comme une app classique
+
+```bash
+cp -R ~/Library/Developer/Xcode/DerivedData/claudeBar-*/Build/Products/Debug/claudeBar.app /Applications/
+```
+
+Pour lancer au démarrage : Préférences Système → Général → Éléments de connexion → ajoute `claudeBar.app`
+
+---
+
+## Dépannage
+
+**Les pourcentages restent à 0%** — l'API interne de Claude a peut-être changé. Vérifie l'onglet Réseau dans l'inspecteur Safari sur claude.ai et mets à jour les clés dans `AppDelegate.swift`.
+
+**Le popover ne s'ouvre pas** — vérifie que le App Sandbox est bien désactivé.
