@@ -183,11 +183,25 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
             var session = 0
             var weekly = 0
+            var resetAt: Date? = nil
 
             if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
-                if let fiveHour = json["five_hour"] as? [String: Any],
-                   let util = fiveHour["utilization"] as? Double {
-                    session = min(100, Int(util))
+                if let fiveHour = json["five_hour"] as? [String: Any] {
+                    if let util = fiveHour["utilization"] as? Double {
+                        session = min(100, Int(util))
+                    }
+                    for key in ["resets_at", "reset_at", "resets", "reset"] {
+                        if let s = fiveHour[key] as? String {
+                            let iso = ISO8601DateFormatter()
+                            iso.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+                            if let d = iso.date(from: s) { resetAt = d; break }
+                            iso.formatOptions = [.withInternetDateTime]
+                            if let d = iso.date(from: s) { resetAt = d; break }
+                        } else if let n = fiveHour[key] as? Double {
+                            resetAt = Date(timeIntervalSince1970: n > 1e12 ? n / 1000 : n)
+                            break
+                        }
+                    }
                 }
                 if let sevenDay = json["seven_day"] as? [String: Any],
                    let util = sevenDay["utilization"] as? Double {
@@ -198,6 +212,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             DispatchQueue.main.async { [weak self] in
                 self?.store.sessionPercent = session
                 self?.store.weeklyPercent  = weekly
+                self?.store.sessionResetAt = resetAt
                 self?.store.lastUpdated    = Date()
                 self?.store.isLoading      = false
                 self?.store.errorMessage   = nil

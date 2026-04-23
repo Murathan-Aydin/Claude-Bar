@@ -77,11 +77,13 @@ struct PopoverView: View {
                 VStack(spacing: 16) {
                     UsageRowView(
                         label: "Session actuelle",
-                        percent: store.sessionPercent
+                        percent: store.sessionPercent,
+                        resetAt: store.sessionResetAt
                     )
                     UsageRowView(
                         label: "Cette semaine",
-                        percent: store.weeklyPercent
+                        percent: store.weeklyPercent,
+                        resetAt: nil
                     )
                 }
                 .padding(.horizontal, 16)
@@ -131,6 +133,7 @@ struct PopoverView: View {
 struct UsageRowView: View {
     let label: String
     let percent: Int
+    var resetAt: Date? = nil
 
     var color: Color {
         switch percent {
@@ -140,11 +143,23 @@ struct UsageRowView: View {
         }
     }
 
+    var resetText: String? {
+        guard let d = resetAt else { return nil }
+        let f = DateFormatter()
+        f.dateFormat = "HH:mm"
+        return "Refresh : \(f.string(from: d))"
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
                 Text(label)
                     .font(.system(size: 12, weight: .medium))
+                if let t = resetText {
+                    Text(t)
+                        .font(.system(size: 10))
+                        .foregroundColor(.secondary)
+                }
                 Spacer()
                 Text("\(percent)%")
                     .font(.system(size: 13, weight: .semibold).monospacedDigit())

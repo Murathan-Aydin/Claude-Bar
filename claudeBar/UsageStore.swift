@@ -7,4 +7,5 @@ class UsageStore: ObservableObject {
     @Published var isLoading: Bool      = true
     @Published var errorMessage: String? = nil
     @Published var lastUpdated: Date?   = nil
+    @Published var sessionResetAt: Date? = nil
 }
