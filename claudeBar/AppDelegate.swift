@@ -21,7 +21,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             button.target = self
         }
 
-        let view = PopoverView(store: store, onRefresh: { [weak self] in self?.fetchUsage() })
+        let view = PopoverView(
+            store: store,
+            onRefresh: { [weak self] in self?.fetchUsage(force: true) },
+            onSessionKeyChanged: { [weak self] in self?.resetSessionAndRefetch() }
+        )
         let controller = NSHostingController(rootView: view)
         popover = NSPopover()
         popover?.contentViewController = controller
@@ -63,10 +67,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     // MARK: - Fetch usage via hidden WKWebView (bypasses Cloudflare)
 
-    func fetchUsage() {
-        // Only show spinner on first load (no cached data yet)
-        if store.lastUpdated == nil {
-            store.isLoading = true
+    func fetchUsage(force: Bool = false) {
+        DispatchQueue.main.async { [weak self] in
+            self?.store.isLoading = true
+            self?.store.errorMessage = nil
         }
 
         // Inject the manual session key cookie if set
@@ -82,29 +86,62 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             if let cookie = HTTPCookie(properties: cookieProps) {
                 hiddenWebView?.configuration.websiteDataStore.httpCookieStore.setCookie(cookie) { [weak self] in
                     print("[claudeBar] Injected manual sessionKey cookie")
-                    self?.loadAndFetch()
+                    self?.loadAndFetch(force: force)
                 }
                 return
             }
         }
 
-        loadAndFetch()
+        loadAndFetch(force: force)
     }
 
-    func loadAndFetch() {
+    func loadAndFetch(force: Bool = false) {
         guard let webView = hiddenWebView else { return }
 
-        // Skip full page reload if claude.ai is already loaded (Cloudflare clearance intact)
-        if let current = webView.url, current.host == "claude.ai", !webView.isLoading {
+        // Skip full page reload if claude.ai is already loaded and not forced
+        if !force, let current = webView.url, current.host == "claude.ai", !webView.isLoading {
             fetchOrganizationsViaJS()
             return
         }
 
-        let request = URLRequest(url: URL(string: "https://claude.ai")!)
+        let request = URLRequest(url: URL(string: "https://claude.ai")!,
+                                 cachePolicy: .reloadIgnoringLocalAndRemoteCacheData,
+                                 timeoutInterval: 30)
         webView.load(request)
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) { [weak self] in
             self?.fetchOrganizationsViaJS()
+        }
+    }
+
+    /// Purges all claude.ai cookies + cache, then refetches. Used when the user
+    /// changes the session key or wants to switch accounts.
+    func resetSessionAndRefetch() {
+        guard let webView = hiddenWebView else { return }
+
+        let store = webView.configuration.websiteDataStore
+        let cookieStore = store.httpCookieStore
+
+        cookieStore.getAllCookies { cookies in
+            let group = DispatchGroup()
+            for c in cookies where c.domain.contains("claude.ai") || c.domain.contains("anthropic") {
+                group.enter()
+                cookieStore.delete(c) { group.leave() }
+            }
+            group.notify(queue: .main) { [weak self] in
+                let types: Set<String> = [
+                    WKWebsiteDataTypeDiskCache,
+                    WKWebsiteDataTypeMemoryCache,
+                    WKWebsiteDataTypeOfflineWebApplicationCache,
+                    WKWebsiteDataTypeSessionStorage,
+                    WKWebsiteDataTypeLocalStorage,
+                    WKWebsiteDataTypeFetchCache
+                ]
+                store.removeData(ofTypes: types, modifiedSince: .distantPast) { [weak self] in
+                    print("[claudeBar] Cleared claude.ai cookies + cache")
+                    self?.fetchUsage(force: true)
+                }
+            }
         }
     }
 
@@ -137,7 +174,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             guard let text = result as? String,
                   let data = text.data(using: .utf8),
                   let json = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]],
-                  let orgId = json.first?["uuid"] as? String else {
+                  !json.isEmpty else {
                 print("[claudeBar] /organizations parse failed, result: \(String(describing: result))")
                 DispatchQueue.main.async {
                     self?.store.isLoading = false
@@ -146,8 +183,23 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 return
             }
 
-            print("[claudeBar] Found orgId: \(orgId)")
-            self?.fetchUsageViaJS(orgId: orgId)
+            let orgs: [Organization] = json.compactMap { dict in
+                guard let id = dict["uuid"] as? String else { return nil }
+                let name = (dict["name"] as? String) ?? "Sans nom"
+                return Organization(id: id, name: name)
+            }
+
+            // Pick saved org if still present, otherwise fall back to first
+            let savedId = UserDefaults.standard.string(forKey: "selectedOrgId") ?? ""
+            let chosen = orgs.first(where: { $0.id == savedId }) ?? orgs.first!
+
+            DispatchQueue.main.async {
+                self?.store.organizations = orgs
+                self?.store.currentOrgName = chosen.name
+            }
+
+            print("[claudeBar] Orgs: \(orgs.map { $0.name }) — using: \(chosen.name)")
+            self?.fetchUsageViaJS(orgId: chosen.id)
         }
     }
 

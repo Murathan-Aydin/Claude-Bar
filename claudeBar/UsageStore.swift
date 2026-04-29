@@ -8,4 +8,11 @@ class UsageStore: ObservableObject {
     @Published var errorMessage: String? = nil
     @Published var lastUpdated: Date?   = nil
     @Published var sessionResetAt: Date? = nil
+    @Published var organizations: [Organization] = []
+    @Published var currentOrgName: String? = nil
+}
+
+struct Organization: Identifiable, Hashable {
+    let id: String
+    let name: String
 }

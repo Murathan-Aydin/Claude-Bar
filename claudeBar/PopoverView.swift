@@ -4,6 +4,7 @@ import AppKit
 struct PopoverView: View {
     @ObservedObject var store: UsageStore
     var onRefresh: () -> Void = {}
+    var onSessionKeyChanged: () -> Void = {}
     @State private var showSettings = false
 
     var body: some View {
@@ -20,11 +21,16 @@ struct PopoverView: View {
                 Button {
                     onRefresh()
                 } label: {
-                    Image(systemName: store.isLoading ? "arrow.clockwise" : "arrow.clockwise")
-                        .foregroundColor(.secondary)
-                        .font(.system(size: 13))
-                        .rotationEffect(.degrees(store.isLoading ? 360 : 0))
-                        .animation(store.isLoading ? .linear(duration: 1).repeatForever(autoreverses: false) : .default, value: store.isLoading)
+                    TimelineView(.animation(minimumInterval: 1.0/60.0, paused: !store.isLoading)) { ctx in
+                        let angle = store.isLoading
+                            ? (ctx.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 1.0)) * 360.0
+                            : 0
+                        Image(systemName: "arrow.clockwise")
+                            .foregroundColor(.secondary)
+                            .font(.system(size: 13))
+                            .rotationEffect(.degrees(angle))
+                    }
+                    .frame(width: 16, height: 16)
                 }
                 .buttonStyle(.plain)
                 .disabled(store.isLoading)
@@ -117,7 +123,7 @@ struct PopoverView: View {
             .padding(.vertical, 10)
         }
         .sheet(isPresented: $showSettings) {
-            SettingsView()
+            SettingsView(store: store, onSaved: onSessionKeyChanged, onOrgChanged: onRefresh)
         }
     }
 
@@ -184,11 +190,31 @@ struct UsageRowView: View {
 // ── Paramètres (saisie manuelle) ─────────────────────────────────────────────
 
 struct SettingsView: View {
+    @ObservedObject var store: UsageStore
     @AppStorage("claudeSessionKey") var sessionKey: String = ""
+    @AppStorage("selectedOrgId") var selectedOrgId: String = ""
     @Environment(\.dismiss) var dismiss
+    var onSaved: () -> Void = {}
+    var onOrgChanged: () -> Void = {}
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
+            if !store.organizations.isEmpty {
+                Text("Espace de travail")
+                    .font(.headline)
+                Picker("", selection: $selectedOrgId) {
+                    ForEach(store.organizations) { org in
+                        Text(org.name).tag(org.id)
+                    }
+                }
+                .labelsHidden()
+                .pickerStyle(.menu)
+                .onChange(of: selectedOrgId) { _, _ in
+                    onOrgChanged()
+                }
+                Divider()
+            }
+
             Text("Session Key manuelle")
                 .font(.headline)
 
@@ -201,10 +227,18 @@ struct SettingsView: View {
                 .font(.system(size: 11, design: .monospaced))
 
             HStack {
+                Button("Effacer la session") {
+                    sessionKey = ""
+                    UserDefaults.standard.set("", forKey: "claudeSessionKey")
+                    onSaved()
+                    dismiss()
+                }
+                .foregroundColor(.red)
                 Spacer()
                 Button("Annuler") { dismiss() }
                 Button("Enregistrer") {
                     UserDefaults.standard.set(sessionKey, forKey: "claudeSessionKey")
+                    onSaved()
                     dismiss()
                 }
                 .buttonStyle(.borderedProminent)
