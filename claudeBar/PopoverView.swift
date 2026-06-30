@@ -1,5 +1,6 @@
 import SwiftUI
 import AppKit
+import ServiceManagement
 
 struct PopoverView: View {
     @ObservedObject var store: UsageStore
@@ -197,6 +198,8 @@ struct SettingsView: View {
     var onSaved: () -> Void = {}
     var onOrgChanged: () -> Void = {}
 
+    @State private var launchAtLogin: Bool = (SMAppService.mainApp.status == .enabled)
+
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             if !store.organizations.isEmpty {
@@ -214,6 +217,21 @@ struct SettingsView: View {
                 }
                 Divider()
             }
+
+            Toggle("Lancer au démarrage", isOn: $launchAtLogin)
+                .onChange(of: launchAtLogin) { _, newValue in
+                    do {
+                        if newValue {
+                            try SMAppService.mainApp.register()
+                        } else {
+                            try SMAppService.mainApp.unregister()
+                        }
+                    } catch {
+                        print("[claudeBar] Launch at login error: \(error)")
+                    }
+                }
+
+            Divider()
 
             Text("Session Key manuelle")
                 .font(.headline)
