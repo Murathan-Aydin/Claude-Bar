@@ -99,8 +99,8 @@ internal static class SelfTest
                 state.WeeklyPercent = 87;
                 state.SessionResetAt = DateTimeOffset.Now.AddHours(2);
                 state.LastUpdated = DateTime.Now.AddMinutes(-3);
-                state.Organizations = [new Organization("a", "Perso"), new Organization("b", "OID Consultants")];
-                state.CurrentOrgName = "OID Consultants";
+                state.Organizations = [new Organization("a", "Personnel"), new Organization("b", "Mon équipe")];
+                state.CurrentOrgName = "Mon équipe";
             }),
             ("loading", () =>
             {
@@ -126,7 +126,7 @@ internal static class SelfTest
             setup();
             foreach (var (theme, dark) in new[] { ("light", false), ("dark", true) })
             {
-                foreach (int dpi in new[] { 96, 144 })
+                foreach (int dpi in new[] { 96, 144, 192 })
                 {
                     using var bmp = popup.RenderSnapshot(dark, dpi);
                     bmp.Save(Path.Combine(outDir, $"popup-{name}-{theme}-{dpi}.png"), ImageFormat.Png);

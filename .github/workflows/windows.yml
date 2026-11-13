@@ -20,9 +20,9 @@ jobs:
   build:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v6
         with:
           dotnet-version: '10.0.x'
 
@@ -53,7 +53,7 @@ jobs:
           Get-Content (Join-Path $out "selftest.txt")
           if ($p.ExitCode -ne 0) { throw "Selftest en échec (code $($p.ExitCode))" }
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: ClaudeBar-Windows
@@ -79,9 +79,9 @@ jobs:
     # Paquet Microsoft Store : construit, installé pour de vrai (certificat de test), puis autotesté dans le paquet.
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v6
         with:
           dotnet-version: '10.0.x'
 
@@ -113,7 +113,7 @@ jobs:
           Remove-AppxPackage -Package $pkg.PackageFullName
           if ($p.ExitCode -ne 0) { throw "Autotest du paquet en échec (code $($p.ExitCode))" }
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: ClaudeBar-Store

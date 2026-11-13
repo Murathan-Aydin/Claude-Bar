@@ -8,6 +8,8 @@ Version Windows de Claude Bar : affiche ton utilisation de Claude.ai (session de
 
 ## Installation (utilisateurs)
 
+> **Bientôt sur le Microsoft Store** : la version Store est signée par Microsoft, donc s'installe sans aucun avertissement. Le paquet est prêt, la publication est en cours (voir [store/SOUMISSION.md](store/SOUMISSION.md)). En attendant, l'installateur ci-dessous fonctionne.
+
 1. Télécharge **[ClaudeBar-Setup.exe](https://github.com/Murathan-Aydin/Claude-Bar/releases/latest/download/ClaudeBar-Setup.exe)**
 2. Double-clique dessus → **Suivant** → **Terminer**
    - Aucun droit administrateur n'est demandé (installation dans ton profil).
@@ -125,6 +127,21 @@ git tag v1.0.0 && git push origin v1.0.0
 ```
 
 Le lien de téléchargement `releases/latest/download/ClaudeBar-Setup.exe` pointe alors toujours vers la dernière version.
+
+### Version Microsoft Store (MSIX)
+
+```powershell
+.\windows\build-msix.ps1 -Version 1.1.0            # dist\ClaudeBar-Store.msix (non signé, pour Partner Center)
+.\windows\build-msix.ps1 -Version 1.1.0 -TestSign  # + ClaudeBar-Test.msix/.cer pour l'installer en local
+```
+Windows uniquement (outils `makeappx` / `makepri` du SDK Windows). La CI le fait à chaque push (job `msix`) : elle construit le paquet, l'installe réellement avec un certificat de test et lance l'autotest à l'intérieur du paquet.
+
+- `store/AppxManifest.xml` : manifeste (identité injectée depuis `store/identity.json`)
+- `store/Assets/` : icônes du paquet (`tools/make-store-assets.sh`)
+- `store/screenshots/` : captures de la fiche (`tools/make-store-screenshots.sh <dossier-selftest>`)
+- `store/SOUMISSION.md` : procédure Partner Center pas à pas
+
+Différences à l'exécution quand l'app tourne depuis le paquet : démarrage automatique via la `StartupTask` du manifeste (au lieu de la clé `Run`), données dans le dossier local du paquet (`%LOCALAPPDATA%\Packages\<paquet>\LocalState`).
 
 ### Autotest
 
