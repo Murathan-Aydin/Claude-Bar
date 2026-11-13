@@ -24,3 +24,6 @@ windows/publish-msix/
 windows/msix-stage/
 windows/msix-work/
 selftest-msix/
+
+# Paquets MSIX téléchargés / téléversés à la main
+*.msix

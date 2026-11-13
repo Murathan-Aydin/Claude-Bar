@@ -1,7 +1,7 @@
 {
-  "_comment": "À remplacer par les valeurs de Partner Center : Gestion des produits > Identité du produit. Voir windows/store/SOUMISSION.md.",
-  "identityName": "ClaudeBar.Preview",
-  "publisher": "CN=ClaudeBarPreview",
-  "publisherDisplayName": "Murathan Aydin",
-  "displayName": "Claude Bar"
+  "_comment": "Valeurs de Partner Center : Gestion des produits > Identité du produit (ID Store 9NN4C52SMH1Z). Voir windows/store/SOUMISSION.md.",
+  "identityName": "M-Aydin.UsageBarforclaud",
+  "publisher": "CN=526DF09A-CA12-46F5-936D-4028DA29069A",
+  "publisherDisplayName": "M-Aydin",
+  "displayName": "Usage Bar for claud"
 }
