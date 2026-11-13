@@ -243,8 +243,8 @@ internal sealed class UsagePopup : Form
         // Pied de page
         _footerTop = y + 1;
         int footerH = S(40);
-        var quitSize = TextRenderer.MeasureText("Quitter", f.Small, Size.Empty, SingleLine);
-        var openSize = TextRenderer.MeasureText("Ouvrir Claude", f.Small, Size.Empty, SingleLine);
+        var quitSize = MeasureLine("Quitter", f.Small);
+        var openSize = MeasureLine("Ouvrir Claude", f.Small);
         int linkH = S(24);
         int linkTop = _footerTop + (footerH - linkH) / 2;
         _quitRect = new Rectangle(w - pad - quitSize.Width, linkTop, quitSize.Width, linkH);
@@ -301,7 +301,7 @@ internal sealed class UsagePopup : Form
                 break;
         }
 
-        var primarySize = TextRenderer.MeasureText(_primaryText, f.Button, Size.Empty, SingleLine);
+        var primarySize = MeasureLine(_primaryText, f.Button);
         int bw = primarySize.Width + S(32), bh = S(30);
         _primaryRect = new Rectangle((w - bw) / 2, y, bw, bh);
         _targets.Add(new HitTarget("primary", _primaryRect, primary));
@@ -310,7 +310,7 @@ internal sealed class UsagePopup : Form
         if (secondary != null)
         {
             y += S(6);
-            var secSize = TextRenderer.MeasureText(_secondaryText, f.Small, Size.Empty, SingleLine);
+            var secSize = MeasureLine(_secondaryText, f.Small);
             _secondaryRect = new Rectangle((w - secSize.Width) / 2, y, secSize.Width, S(22));
             _targets.Add(new HitTarget("secondary", Inflate(_secondaryRect, S(4)), secondary));
             y += S(22);
@@ -322,6 +322,12 @@ internal sealed class UsagePopup : Form
 
         return y + S(16);
     }
+
+    /// <summary>Largeur réelle d'un texte sur une ligne. Surtout pas d'EndEllipsis ici : avec une taille
+    /// proposée vide, GDI renverrait la largeur de « … » au lieu de celle du texte.</summary>
+    private static Size MeasureLine(string text, Font font) =>
+        TextRenderer.MeasureText(text, font, new Size(int.MaxValue, int.MaxValue),
+            TextFormatFlags.NoPrefix | TextFormatFlags.SingleLine);
 
     private static Rectangle Inflate(Rectangle r, int by)
     {
@@ -433,11 +439,11 @@ internal sealed class UsagePopup : Form
         int lineH = S(18);
 
         string pct = $"{percent}%";
-        var pctSize = TextRenderer.MeasureText(pct, f.Percent, Size.Empty, SingleLine);
+        var pctSize = MeasureLine(pct, f.Percent);
         var pctRect = new Rectangle(w - pad - pctSize.Width, top, pctSize.Width, lineH);
         TextRenderer.DrawText(g, pct, f.Percent, pctRect, color, SingleLine);
 
-        var labelSize = TextRenderer.MeasureText(label, f.Label, Size.Empty, SingleLine);
+        var labelSize = MeasureLine(label, f.Label);
         var labelRect = new Rectangle(pad, top, Math.Min(labelSize.Width, pctRect.Left - pad), lineH);
         TextRenderer.DrawText(g, label, f.Label, labelRect, p.Foreground, SingleLine);
 
