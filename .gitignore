@@ -13,3 +13,10 @@ build/
 
 # macOS
 .DS_Store
+
+# Windows (.NET)
+windows/publish/
+windows/dist/
+windows/src/ClaudeBar/bin/
+windows/src/ClaudeBar/obj/
+selftest/

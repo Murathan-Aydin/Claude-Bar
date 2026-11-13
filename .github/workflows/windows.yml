@@ -1,0 +1,76 @@
+name: Windows
+
+on:
+  push:
+    branches: ['**']
+    tags: ['v*']
+    paths:
+      - 'windows/**'
+      - '.github/workflows/windows.yml'
+  pull_request:
+    paths:
+      - 'windows/**'
+      - '.github/workflows/windows.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Installer NSIS si absent
+        shell: pwsh
+        run: |
+          if (-not (Get-Command makensis -ErrorAction SilentlyContinue) -and
+              -not (Test-Path "${env:ProgramFiles(x86)}\NSIS\makensis.exe")) {
+            choco install nsis --no-progress -y
+          }
+
+      - name: Version
+        id: version
+        shell: pwsh
+        run: |
+          $v = if ("${{ github.ref_type }}" -eq "tag") { "${{ github.ref_name }}".TrimStart('v') } else { "0.0.${{ github.run_number }}" }
+          "value=$v" >> $env:GITHUB_OUTPUT
+
+      - name: Build (exe + installateur)
+        shell: pwsh
+        run: ./windows/build.ps1 -Version ${{ steps.version.outputs.value }}
+
+      - name: Selftest (WebView2 + rendu)
+        shell: pwsh
+        run: |
+          $out = Join-Path $PWD "selftest"
+          $p = Start-Process -FilePath "windows/publish/ClaudeBar.exe" -ArgumentList "--selftest", "`"$out`"" -Wait -PassThru
+          Get-Content (Join-Path $out "selftest.txt")
+          if ($p.ExitCode -ne 0) { throw "Selftest en échec (code $($p.ExitCode))" }
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ClaudeBar-Windows
+          path: |
+            windows/dist/ClaudeBar-Setup.exe
+            selftest/
+
+      - name: Publier la release
+        if: github.ref_type == 'tag'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = "${{ github.ref_name }}"
+          gh release view $tag 2>$null
+          if ($LASTEXITCODE -eq 0) {
+            gh release upload $tag windows/dist/ClaudeBar-Setup.exe --clobber
+          } else {
+            gh release create $tag windows/dist/ClaudeBar-Setup.exe --title "Claude Bar $tag" --generate-notes
+          }

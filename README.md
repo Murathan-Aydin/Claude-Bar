@@ -1,8 +1,10 @@
 # Claude Bar
 
-A macOS menu bar app that shows your Claude.ai usage — current session and weekly limit.
+A macOS menu bar app (and Windows system tray app) that shows your Claude.ai usage — current session and weekly limit.
 
-![macOS](https://img.shields.io/badge/macOS-13%2B-black) ![Swift](https://img.shields.io/badge/Swift-5.9-orange)
+![macOS](https://img.shields.io/badge/macOS-13%2B-black) ![Swift](https://img.shields.io/badge/Swift-5.9-orange) ![Windows](https://img.shields.io/badge/Windows-10%20%2F%2011-0078D4)
+
+> **Windows users:** download **[ClaudeBar-Setup.exe](https://github.com/Murathan-Aydin/Claude-Bar/releases/latest/download/ClaudeBar-Setup.exe)** — no admin rights needed. See [windows/README.md](windows/README.md).
 
 ![screenshot](assets/screenshot.png)
 
@@ -86,6 +88,8 @@ To launch at login: System Settings → General → Login Items → add `claudeB
 # Claude Bar — Français
 
 Une app macOS qui affiche ton taux d'utilisation Claude.ai dans la barre de menu.
+
+> **Sur Windows :** télécharge **[ClaudeBar-Setup.exe](https://github.com/Murathan-Aydin/Claude-Bar/releases/latest/download/ClaudeBar-Setup.exe)**, double-clique, c'est installé (sans droits administrateur). Détails dans [windows/README.md](windows/README.md).
 
 ---
 

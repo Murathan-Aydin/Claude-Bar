@@ -52,3 +52,11 @@ GET /api/organizations/{id}/usage   → { five_hour: { utilization: Double }, se
 ```
 
 If percentages stay at 0%, the API keys (`five_hour`, `seven_day`, `utilization`) may have changed — inspect Network tab in Safari Web Inspector on claude.ai.
+
+## Windows port (`windows/`)
+
+Separate C# / .NET 10 WinForms app with the same data flow (see `windows/README.md`). Keep both ports in sync when the API shape changes (`ClaudeApi.ParseUsage` on Windows, `fetchUsageViaJS` on macOS).
+
+- Hidden `WebView2` replaces `WKWebView`; in-page `fetch` runs via DevTools `Runtime.evaluate` with `awaitPromise` (WebView2's `ExecuteScriptAsync` can't await promises).
+- Build from macOS: `./windows/build.sh 1.0.0` (needs .NET 10 SDK + `brew install makensis`) → `windows/dist/ClaudeBar-Setup.exe`. On Windows: `windows/build.ps1`.
+- CI: `.github/workflows/windows.yml` builds on `windows-latest`, runs `ClaudeBar.exe --selftest` (renders PNGs of every UI state + live WebView2 call), and attaches the installer to a GitHub Release on `v*` tags.
