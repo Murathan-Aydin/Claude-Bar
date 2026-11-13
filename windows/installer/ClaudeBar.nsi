@@ -16,22 +16,22 @@ ManifestDPIAware true
   !define VERSION "1.0.0"
 !endif
 !ifndef PUBLISH_DIR
-  !define PUBLISH_DIR "../publish"
+  !define PUBLISH_DIR "..\publish"
 !endif
 !ifndef OUT_DIR
-  !define OUT_DIR "../dist"
+  !define OUT_DIR "..\dist"
 !endif
 
 !define APP_NAME "Claude Bar"
 !define APP_ID "ClaudeBar"
 !define APP_EXE "ClaudeBar.exe"
 !define PUBLISHER "Murathan Aydin"
-!define ICON_SRC "../src/ClaudeBar/app.ico"
+!define ICON_SRC "..\src\ClaudeBar\app.ico"
 !define UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_ID}"
 !define RUN_KEY "Software\Microsoft\Windows\CurrentVersion\Run"
 
 Name "${APP_NAME}"
-OutFile "${OUT_DIR}/ClaudeBar-Setup.exe"
+OutFile "${OUT_DIR}\ClaudeBar-Setup.exe"
 InstallDir "$LOCALAPPDATA\Programs\${APP_ID}"
 RequestExecutionLevel user
 SetCompressor /SOLID lzma
@@ -91,7 +91,7 @@ Section "Claude Bar" SecMain
   SetOutPath "$INSTDIR"
   !insertmacro CLOSE_RUNNING_APP
 
-  File /r "${PUBLISH_DIR}/*"
+  File /r "${PUBLISH_DIR}\*"
   File "/oname=app.ico" "${ICON_SRC}"
   WriteUninstaller "$INSTDIR\Uninstall.exe"
 
