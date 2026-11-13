@@ -17,6 +17,7 @@ internal static class SelfTest
         var report = new StringBuilder();
         report.AppendLine($"Claude Bar {AppInfo.Version} — selftest {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
         report.AppendLine($"Windows {Environment.OSVersion.Version}");
+        report.AppendLine($"Paquet MSIX : {(PackageInfo.IsPackaged ? "oui" : "non")} — données : {AppPaths.DataDir}");
         int exitCode = 0;
 
         try
@@ -39,7 +40,9 @@ internal static class SelfTest
         else
         {
             report.AppendLine($"WebView2 runtime : {version}");
-            var (result, error) = RunLiveFetch();
+            var (result, error, startup) = RunLiveFetch();
+            report.AppendLine($"Démarrage automatique : {startup}");
+            if (startup.StartsWith("ERREUR")) exitCode = 1;
             if (error != null)
             {
                 report.AppendLine($"Appel claude.ai : EXCEPTION — {error}");
@@ -147,9 +150,10 @@ internal static class SelfTest
         settings.Close();
     }
 
-    private static (FetchResult? Result, Exception? Error) RunLiveFetch()
+    private static (FetchResult? Result, Exception? Error, string Startup) RunLiveFetch()
     {
         FetchResult? result = null;
+        string startup = "non vérifié";
         Exception? error = null;
 
         using var host = new Form { ShowInTaskbar = false, Size = new Size(1280, 800) };
@@ -163,6 +167,16 @@ internal static class SelfTest
         {
             try
             {
+                try
+                {
+                    // En MSIX, vérifie que la tâche de démarrage du manifeste est bien trouvée.
+                    startup = (await StartupManager.IsEnabledAsync(throwOnError: true) ? "activé" : "désactivé") +
+                              (PackageInfo.IsPackaged ? " (tâche MSIX)" : " (registre)");
+                }
+                catch (Exception ex)
+                {
+                    startup = $"ERREUR — {ex.Message}";
+                }
                 result = await service.FetchAsync(null, forceReload: true);
             }
             catch (Exception ex)
@@ -176,6 +190,6 @@ internal static class SelfTest
         }));
 
         Application.Run();
-        return (result, error);
+        return (result, error, startup);
     }
 }

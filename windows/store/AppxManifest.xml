@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Manifeste du paquet MSIX (Microsoft Store).
+  Les valeurs entre $…$ sont remplacées par windows/build-msix.ps1 à partir de windows/store/identity.json
+  (identité réservée dans Partner Center) et de la version.
+-->
+<Package
+  xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+  xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+  xmlns:uap3="http://schemas.microsoft.com/appx/manifest/uap/windows10/3"
+  xmlns:desktop="http://schemas.microsoft.com/appx/manifest/desktop/windows10"
+  xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+  IgnorableNamespaces="uap uap3 desktop rescap">
+
+  <Identity
+    Name="$IDENTITY_NAME$"
+    Publisher="$PUBLISHER$"
+    Version="$VERSION$"
+    ProcessorArchitecture="x64" />
+
+  <Properties>
+    <DisplayName>$DISPLAY_NAME$</DisplayName>
+    <PublisherDisplayName>$PUBLISHER_DISPLAY_NAME$</PublisherDisplayName>
+    <Logo>Assets\StoreLogo.png</Logo>
+    <Description>Affiche ton utilisation de Claude.ai (session de 5 heures et limite hebdomadaire) dans la zone de notification.</Description>
+  </Properties>
+
+  <Dependencies>
+    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.17763.0" MaxVersionTested="10.0.26100.0" />
+  </Dependencies>
+
+  <Resources>
+    <Resource Language="fr-FR" />
+  </Resources>
+
+  <Applications>
+    <Application Id="ClaudeBar" Executable="ClaudeBar.exe" EntryPoint="Windows.FullTrustApplication">
+      <uap:VisualElements
+        DisplayName="$DISPLAY_NAME$"
+        Description="Affiche ton utilisation de Claude.ai dans la zone de notification."
+        BackgroundColor="transparent"
+        Square150x150Logo="Assets\Square150x150Logo.png"
+        Square44x44Logo="Assets\Square44x44Logo.png">
+        <uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.png" />
+      </uap:VisualElements>
+
+      <Extensions>
+        <!-- Lancement au démarrage (activé au premier lancement, désactivable par l'utilisateur) -->
+        <desktop:Extension Category="windows.startupTask" Executable="ClaudeBar.exe" EntryPoint="Windows.FullTrustApplication">
+          <desktop:StartupTask TaskId="ClaudeBarStartup" Enabled="false" DisplayName="$DISPLAY_NAME$" />
+        </desktop:Extension>
+
+        <!-- Commande « claudebar » (sert à l'autotest du paquet en CI) -->
+        <uap3:Extension Category="windows.appExecutionAlias" Executable="ClaudeBar.exe" EntryPoint="Windows.FullTrustApplication">
+          <uap3:AppExecutionAlias>
+            <desktop:ExecutionAlias Alias="claudebar.exe" />
+          </uap3:AppExecutionAlias>
+        </uap3:Extension>
+      </Extensions>
+    </Application>
+  </Applications>
+
+  <Capabilities>
+    <Capability Name="internetClient" />
+    <rescap:Capability Name="runFullTrust" />
+  </Capabilities>
+</Package>

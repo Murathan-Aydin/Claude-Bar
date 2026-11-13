@@ -9,6 +9,7 @@ internal sealed class SettingsForm : Form
     private readonly ComboBox? _orgCombo;
     private readonly CheckBox _autostart;
     private readonly TextBox _keyBox;
+    private bool _syncingAutostart;
 
     public event Action? LoginRequested;
     public event Action<string>? SessionKeyEntered;
@@ -65,11 +66,29 @@ internal sealed class SettingsForm : Form
         _autostart = new CheckBox
         {
             Text = "Lancer Claude Bar au démarrage de Windows",
-            Checked = StartupManager.IsEnabled(),
+            Checked = StartupManager.CachedEnabled,
             AutoSize = true,
             Margin = new Padding(0, 0, 0, 14),
         };
-        _autostart.CheckedChanged += (_, _) => StartupManager.SetEnabled(_autostart.Checked);
+        _autostart.CheckedChanged += async (_, _) =>
+        {
+            if (_syncingAutostart) return;
+            string? error = await StartupManager.SetEnabledAsync(_autostart.Checked);
+            if (error != null)
+            {
+                MessageBox.Show(this, error, "Claude Bar", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                _syncingAutostart = true;
+                _autostart.Checked = StartupManager.CachedEnabled;
+                _syncingAutostart = false;
+            }
+        };
+        Load += async (_, _) =>
+        {
+            bool enabled = await StartupManager.IsEnabledAsync();
+            _syncingAutostart = true;
+            _autostart.Checked = enabled;
+            _syncingAutostart = false;
+        };
         layout.Controls.Add(_autostart);
 
         // Compte

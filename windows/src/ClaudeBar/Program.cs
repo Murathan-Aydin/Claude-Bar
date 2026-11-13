@@ -30,7 +30,7 @@ internal static class Program
             return SelfTest.Run(outDir);
         }
 
-        bool launchedAtStartup = HasArg("--autostart");
+        bool launchedAtStartup = HasArg("--autostart") || PackageInfo.WasLaunchedByStartupTask();
 
         using var mutex = new Mutex(initiallyOwned: true, MutexName, out bool isFirstInstance);
         if (!isFirstInstance)

@@ -113,10 +113,12 @@ internal sealed class TrayApplicationContext : ApplicationContext
         }
         Log.Info($"WebView2 runtime {version}");
 
+        await StartupManager.IsEnabledAsync();
         bool firstRun = !_settings.HasCompletedFirstRun;
         if (firstRun)
         {
             _settings.HasCompletedFirstRun = true;
+            if (PackageInfo.IsPackaged) await StartupManager.SetEnabledAsync(true);
             _settings.Save();
             _tray.ShowBalloonTip(8000, "Claude Bar est lancé",
                 "L'icône est dans la zone de notification, près de l'horloge. Astuce : si elle est cachée derrière « ^ », fais-la glisser dans la barre des tâches pour la garder visible.",
@@ -291,17 +293,25 @@ internal sealed class TrayApplicationContext : ApplicationContext
         menu.Items.Add("Paramètres…", null, (_, _) => OpenSettings());
         menu.Items.Add("Ouvrir claude.ai", null, (_, _) => Shell.OpenUrl(ClaudeApi.BaseUrl));
         menu.Items.Add(new ToolStripSeparator());
-        _autostartItem.Click += (_, _) => StartupManager.SetEnabled(!StartupManager.IsEnabled());
+        _autostartItem.Click += async (_, _) =>
+        {
+            string? error = await StartupManager.SetEnabledAsync(!StartupManager.CachedEnabled);
+            if (error != null) _tray.ShowBalloonTip(6000, "Claude Bar", error, ToolTipIcon.Info);
+        };
         menu.Items.Add(_autostartItem);
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add("Quitter", null, (_, _) => ExitApp());
         menu.Opening += (_, _) =>
         {
             _popup.HidePopup();
-            _autostartItem.Checked = StartupManager.IsEnabled();
+            _autostartItem.Checked = StartupManager.CachedEnabled;
+            _ = UpdateAutostartCheckAsync();
         };
         return menu;
     }
+
+    private async Task UpdateAutostartCheckAsync() =>
+        _autostartItem.Checked = await StartupManager.IsEnabledAsync();
 
     // ── Fenêtres ───────────────────────────────────────────────────────────
 

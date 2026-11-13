@@ -20,3 +20,7 @@ windows/dist/
 windows/src/ClaudeBar/bin/
 windows/src/ClaudeBar/obj/
 selftest/
+windows/publish-msix/
+windows/msix-stage/
+windows/msix-work/
+selftest-msix/

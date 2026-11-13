@@ -74,3 +74,49 @@ jobs:
           } else {
             gh release create $tag windows/dist/ClaudeBar-Setup.exe --title "Claude Bar $tag" --generate-notes
           }
+
+  msix:
+    # Paquet Microsoft Store : construit, installé pour de vrai (certificat de test), puis autotesté dans le paquet.
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Version
+        id: version
+        shell: pwsh
+        run: |
+          $v = if ("${{ github.ref_type }}" -eq "tag") { "${{ github.ref_name }}".TrimStart('v') } else { "0.0.${{ github.run_number }}" }
+          "value=$v" >> $env:GITHUB_OUTPUT
+
+      - name: Build MSIX
+        shell: pwsh
+        run: ./windows/build-msix.ps1 -Version ${{ steps.version.outputs.value }} -TestSign
+
+      - name: Installer le paquet et lancer l'autotest
+        shell: pwsh
+        run: |
+          Import-Certificate -FilePath windows/dist/ClaudeBar-Test.cer -CertStoreLocation Cert:\LocalMachine\TrustedPeople | Out-Null
+          Add-AppxPackage -Path windows/dist/ClaudeBar-Test.msix
+          $name = (Get-Content windows/store/identity.json -Raw | ConvertFrom-Json).identityName
+          $pkg = Get-AppxPackage -Name $name
+          if (-not $pkg) { throw "Paquet non installé" }
+          "Installé : $($pkg.PackageFullName)"
+          $alias = Join-Path $env:LOCALAPPDATA "Microsoft\WindowsApps\claudebar.exe"
+          if (-not (Test-Path $alias)) { throw "Alias claudebar.exe absent" }
+          $out = Join-Path $PWD "selftest-msix"
+          $p = Start-Process -FilePath $alias -ArgumentList "--selftest", "`"$out`"" -Wait -PassThru
+          Get-Content (Join-Path $out "selftest.txt")
+          Remove-AppxPackage -Package $pkg.PackageFullName
+          if ($p.ExitCode -ne 0) { throw "Autotest du paquet en échec (code $($p.ExitCode))" }
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ClaudeBar-Store
+          path: |
+            windows/dist/ClaudeBar-Store.msix
+            selftest-msix/

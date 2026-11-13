@@ -1,0 +1,7 @@
+{
+  "_comment": "À remplacer par les valeurs de Partner Center : Gestion des produits > Identité du produit. Voir windows/store/SOUMISSION.md.",
+  "identityName": "ClaudeBar.Preview",
+  "publisher": "CN=ClaudeBarPreview",
+  "publisherDisplayName": "Murathan Aydin",
+  "displayName": "Claude Bar"
+}

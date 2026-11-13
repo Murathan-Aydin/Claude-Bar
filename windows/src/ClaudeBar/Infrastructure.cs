@@ -14,9 +14,26 @@ internal static class AppInfo
 
 internal static class AppPaths
 {
-    /// <summary>%LOCALAPPDATA%\ClaudeBar — réglages, journal et profil WebView2 (cookies claude.ai).</summary>
-    public static string DataDir { get; } = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ClaudeBar");
+    /// <summary>Réglages, journal et profil WebView2 (cookies claude.ai).
+    /// Installation classique : %LOCALAPPDATA%\ClaudeBar. Version Store (MSIX) : dossier local du paquet,
+    /// seul chemin vu à l'identique par l'app ET par les processus WebView2 (hors paquet).</summary>
+    public static string DataDir { get; } = ResolveDataDir();
+
+    private static string ResolveDataDir()
+    {
+        if (PackageInfo.IsPackaged)
+        {
+            try
+            {
+                return Windows.Storage.ApplicationData.Current.LocalFolder.Path;
+            }
+            catch
+            {
+                // repli ci-dessous
+            }
+        }
+        return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ClaudeBar");
+    }
 
     public static string SettingsFile => Path.Combine(DataDir, "settings.json");
     public static string LogFile => Path.Combine(DataDir, "claudebar.log");
@@ -115,60 +132,6 @@ internal sealed class AppSettings
         catch (Exception ex)
         {
             Log.Error("Écriture des réglages impossible", ex);
-        }
-    }
-}
-
-/// <summary>Lancement au démarrage via HKCU\...\Run (aucun droit administrateur requis).</summary>
-internal static class StartupManager
-{
-    private const string RunKey = @"Software\Microsoft\Windows\CurrentVersion\Run";
-    private const string ValueName = "ClaudeBar";
-
-    private static string Command => $"\"{Environment.ProcessPath}\" --autostart";
-
-    public static bool IsEnabled()
-    {
-        try
-        {
-            using var key = Registry.CurrentUser.OpenSubKey(RunKey);
-            return key?.GetValue(ValueName) is string s && s.Length > 0;
-        }
-        catch
-        {
-            return false;
-        }
-    }
-
-    public static void SetEnabled(bool enabled)
-    {
-        try
-        {
-            using var key = Registry.CurrentUser.CreateSubKey(RunKey);
-            if (enabled) key.SetValue(ValueName, Command);
-            else key.DeleteValue(ValueName, throwOnMissingValue: false);
-        }
-        catch (Exception ex)
-        {
-            Log.Error("Modification du lancement au démarrage impossible", ex);
-        }
-    }
-
-    /// <summary>Si l'app a été déplacée, on remet à jour le chemin enregistré.</summary>
-    public static void RefreshPathIfEnabled()
-    {
-        try
-        {
-            using var key = Registry.CurrentUser.OpenSubKey(RunKey);
-            if (key?.GetValue(ValueName) is string current && current.Length > 0 &&
-                !string.Equals(current, Command, StringComparison.OrdinalIgnoreCase))
-            {
-                SetEnabled(true);
-            }
-        }
-        catch
-        {
-            // ignore
         }
     }
 }
